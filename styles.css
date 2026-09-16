@@ -388,7 +388,9 @@ p:last-child{margin-bottom:0}
 }
 @keyframes projFade{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.proj-slide,.proj-slide.is-active{transition:none}}
-.proj-section.is-open .proj-slide{opacity:0;pointer-events:none;transition:opacity .35s var(--ease)}
+/* when a project opens, the browsing photo stays fully visible UNDER the project view, which fades in/out
+   on top. (Fading both at once made the picture dip to the empty card colour mid-transition.) */
+.proj-section.is-open .proj-slide{pointer-events:none}
 .proj-section.is-open .proj-slide__title{visibility:hidden}
 
 .proj-slide__frame{
