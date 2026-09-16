@@ -166,7 +166,7 @@ p:last-child{margin-bottom:0}
 }
 @media (max-width:700px),(max-aspect-ratio:1/1){
   /* the photo is too short on phones to hold the box: it drops below and overlaps the image edge */
-  .hero__inner{position:relative;inset:auto;display:block;padding:0 var(--pad) 32px;margin-top:-56px}
+  .hero__inner{position:relative;inset:auto;display:block;padding:0 var(--pad) 32px;margin-top:-196px}
   .hero__logo{width:min(190px,60%)}
   .hero__box.glass{position:relative;bottom:auto;width:auto;min-height:0;gap:20px;background:rgb(255 255 255 / .75);color:var(--ink);border-color:var(--line)}
   .hero__box.glass::before{display:none}

@@ -26,7 +26,7 @@
     for (var i = 1; i <= n; i++) {
       var num = String(i);
       if (pad) while (num.length < 2) num = '0' + num;
-      a.push(prefix + num + '.jpg');
+      a.push(prefix + num + '.webp');
     }
     return a;
   }
@@ -217,16 +217,45 @@
         b.type = 'button';
         b.className = 'proj-thumb';
         b.setAttribute('aria-label', 'תמונה ' + (k + 1) + ' מתוך ' + images.length);
-        b.innerHTML = '<img src="' + src + '" alt="" loading="lazy">';
+        // small thumbnail file, filled in batches of 5 (see loadThumbsInBatches)
+        b.innerHTML = '<img data-src="' + thumbOf(src) + '" alt="" decoding="async">';
         b.addEventListener('click', function () { setGalleryIndex(k); });
         thumbsHost.appendChild(b);
         return b;
+      });
+      loadThumbsInBatches(++thumbBatchRun);
+    }
+
+    // thumbnails live in assets/projects/thumbs/ with the same file name
+    function thumbOf(src) { return src.replace('assets/projects/', 'assets/projects/thumbs/'); }
+
+    // load the thumb strip 5 at a time: the next 5 start only once the current 5 have finished
+    var thumbBatchRun = 0;
+    function loadThumbsInBatches(run) {
+      var imgs = $$('img[data-src]', thumbsHost);
+      if (!imgs.length || run !== thumbBatchRun) return;
+      var batch = imgs.slice(0, 5), left = batch.length;
+      batch.forEach(function (img) {
+        var done = function () { if (--left === 0) loadThumbsInBatches(run); };
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
+        img.src = img.getAttribute('data-src');
+        img.removeAttribute('data-src');
+      });
+    }
+
+    // warm the browser cache for the photos either side of the current one
+    function preloadAround(n) {
+      [n + 1, n - 1].forEach(function (k) {
+        var src = galleryImages[(k + galleryImages.length) % galleryImages.length];
+        if (src) { var im = new Image(); im.decoding = 'async'; im.src = src; }
       });
     }
 
     function setGalleryIndex(n) {
       galleryIndex = (n + galleryImages.length) % galleryImages.length;
       detailImg.src = galleryImages[galleryIndex];
+      preloadAround(galleryIndex);
       thumbs.forEach(function (t, k) { t.classList.toggle('is-active', k === galleryIndex); });
       // scroll only the thumb strip horizontally (scrollIntoView would also scroll the page)
       var active = thumbs[galleryIndex];
@@ -500,8 +529,8 @@
       wrap.className = 'ba-item';
       wrap.innerHTML =
         '<div class="ba" role="img" aria-label="השוואת לפני ואחרי — ' + item.label + '">' +
-          '<img class="ba__after" src="assets/beforeafter/ba' + item.n + '-after.jpg" alt="' + item.label + ' — אחרי">' +
-          '<img class="ba__before" src="assets/beforeafter/ba' + item.n + '-before.jpg" alt="' + item.label + ' — לפני">' +
+          '<img class="ba__after" src="assets/beforeafter/ba' + item.n + '-after.webp" alt="' + item.label + ' — אחרי" loading="lazy" decoding="async">' +
+          '<img class="ba__before" src="assets/beforeafter/ba' + item.n + '-before.webp" alt="' + item.label + ' — לפני" loading="lazy" decoding="async">' +
           '<span class="ba__tag">לפני</span>' +
         '</div>';
       host.appendChild(wrap);
