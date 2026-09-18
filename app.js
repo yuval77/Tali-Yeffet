@@ -61,7 +61,7 @@
     specialties();
     projectsGallery();
     buildBeforeAfter();
-    pressPan();
+    pressScroller();
     contactFab();
     lightbox();
     copyButtons();
@@ -96,8 +96,10 @@
     }
     // reserve the tallest open state so switching items never changes the section height
     var list = $('.spec__list', root);
+    var stackedMq = window.matchMedia('(max-width:760px),(max-aspect-ratio:1/1)');
     function lockListHeight() {
       list.style.minHeight = '';
+      if (stackedMq.matches) return;
       root.classList.add('spec--measure');
       var current = i, max = 0;
       items.forEach(function (b, k) {
@@ -108,12 +110,18 @@
       root.classList.remove('spec--measure');
       list.style.minHeight = max + 'px';
     }
-    var resizeTimer;
-    window.addEventListener('resize', function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(lockListHeight, 150); });
+    // only re-measure when the WIDTH changes: phones fire "resize" on every scroll as the address bar
+    // hides/shows, and re-measuring then flipped every tab open and shut (the jumping + lag)
+    var resizeTimer, lastW = window.innerWidth;
+    window.addEventListener('resize', function () {
+      if (window.innerWidth === lastW) return;
+      lastW = window.innerWidth;
+      clearTimeout(resizeTimer); resizeTimer = setTimeout(lockListHeight, 150);
+    });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(lockListHeight);
 
     function tick() { setActive(i + 1); }
-    function start() { if (reduce || timer || hovering || !visible) return; timer = setInterval(tick, DWELL); }
+    function start() { if (reduce || stackedMq.matches || timer || hovering || !visible) return; timer = setInterval(tick, DWELL); }
     function stop() { if (timer) { clearInterval(timer); timer = null; } }
     function restart() { stop(); start(); }
 
@@ -478,45 +486,16 @@
     }, { threshold: 0.2 }).observe(contact);
   }
 
-  /* ================= PRESS SCAN (mobile: pans right -> left while scrolling) ================= */
-  function pressPan() {
+  /* ================= PRESS SCAN (mobile: swipe it sideways) ================= */
+  // the scan sits in a sideways-scrolling strip; make sure it starts at its right end (RTL start),
+  // i.e. with the left part of the scan hidden, and let the visitor swipe from there
+  function pressScroller() {
     var fig = $('.press__figure');
     if (!fig) return;
     var img = $('img', fig);
-    if (!img) return;
-
-    var mq = window.matchMedia('(max-width:760px),(max-aspect-ratio:1/1)');
-    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var ticking = false;
-
-    function update() {
-      ticking = false;
-      if (reduce || !mq.matches) { img.style.transform = ''; return; }
-      var travel = img.offsetWidth - fig.clientWidth;      // how much of the scan is off-screen
-      if (travel <= 0) { img.style.transform = ''; return; }
-      var r = fig.getBoundingClientRect();
-      // the whole pan happens while the middle of the screen crosses the band that reaches
-      // 200px above the scan's top and 200px below its bottom
-      var MARGIN = 200, EDGE = 30;
-      var top = r.top + window.scrollY, bottom = r.bottom + window.scrollY;
-      var from = top - MARGIN, to = bottom + MARGIN;
-      var mid = window.scrollY + window.innerHeight / 2;
-      var p = (to > from) ? (mid - from) / (to - from) : 0;
-      p = Math.max(0, Math.min(1, p));
-      // starts with the scan's left edge 30px off the frame, ends with its right edge 30px off
-      var startX = travel - Math.min(EDGE, travel);
-      var endX = Math.min(EDGE, travel);
-      img.style.transform = 'translateX(' + (startX + (endX - startX) * p) + 'px)';
-    }
-    function onScroll() {
-      if (ticking) return;
-      ticking = true;
-      window.requestAnimationFrame(update);
-    }
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    if (img.complete) update(); else img.addEventListener('load', update);
+    function toStart() { fig.scrollLeft = 0; }
+    if (img && !img.complete) img.addEventListener('load', toStart, { once: true });
+    toStart();
   }
 
   /* ================= BEFORE / AFTER (auto crossfade) ================= */
@@ -536,16 +515,24 @@
       host.appendChild(wrap);
     });
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     cycleAll($$('.ba', host));
   }
 
   /* one timer for every pair, so they always flip together:
-     before shows for 2s, after for 5s, back and forth */
+     before shows for 2.5s, after for 5s, back and forth.
+     Clicking any photo flips all of them at once, and the next 2 phases each last 2s longer. */
+  var BA_BEFORE_MS = 2500, BA_AFTER_MS = 5000, BA_CLICK_BONUS_MS = 2000;
   function cycleAll(bas) {
     if (!bas.length) return;
     var showingBefore = true;
     var timer = null;
+    var bonusPhases = 0;
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function phaseMs() {
+      var ms = showingBefore ? BA_BEFORE_MS : BA_AFTER_MS;
+      if (bonusPhases > 0) { bonusPhases--; ms += BA_CLICK_BONUS_MS; }
+      return ms;
+    }
 
     function paint() {
       bas.forEach(function (ba) {
@@ -557,10 +544,20 @@
     function step() {
       showingBefore = !showingBefore;
       paint();
-      timer = setTimeout(step, showingBefore ? 2000 : 5000);
+      timer = setTimeout(step, phaseMs());
     }
-    function start() { if (!timer) timer = setTimeout(step, 2000); }
+    function start() { if (!timer && !reduce) timer = setTimeout(step, phaseMs()); }
     function stop() { clearTimeout(timer); timer = null; }
+
+    bas.forEach(function (ba) {
+      ba.addEventListener('click', function () {
+        stop();
+        showingBefore = !showingBefore;
+        paint();
+        bonusPhases = 2;                       // this phase and the next one are 2s longer
+        if (!reduce) timer = setTimeout(step, phaseMs());
+      });
+    });
 
     paint();
     var section = document.getElementById('beforeafter') || bas[0];

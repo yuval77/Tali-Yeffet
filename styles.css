@@ -78,6 +78,9 @@ p:last-child{margin-bottom:0}
 .btn--ghost:hover{background:var(--ink);color:var(--bg)}
 .btn svg{width:19px;height:19px;flex:none}
 
+/* no double-tap zoom when tapping controls quickly on phones */
+button,a,.proj-visual,.ba,.spec__item{touch-action:manipulation}
+
 /* reveal on scroll */
 .reveal{opacity:0;transform:translateY(18px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
 .reveal.in{opacity:1;transform:none}
@@ -214,9 +217,10 @@ p:last-child{margin-bottom:0}
   background:transparent;color:var(--ink);
   transition:background .45s var(--ease);
 }
-.spec__item:hover{background:rgba(236,229,218,.5)}
-.spec__item.is-active{background:var(--sand)}
-.spec__item.is-active:hover{background:var(--sand)}
+.spec__item{background:var(--sand)}
+.spec__item:hover{background:var(--sand-deep)}
+.spec__item.is-active{background:var(--sand-deep)}
+.spec__item.is-active:hover{background:var(--sand-deep)}
 .spec__ico{flex:none;width:26px;height:26px;margin-top:2px;color:var(--faint);transition:color .4s var(--ease)}
 .spec__ico svg{width:100%;height:100%;display:block}
 .spec__item.is-active .spec__ico{color:var(--clay-dark)}
@@ -267,10 +271,11 @@ p:last-child{margin-bottom:0}
   position:relative;overflow:clip;background:var(--bg);
   margin:0;
 }
+.proj-section{--proj-radius:clamp(18px,2vw,28px)}
 .proj-section::before{
   content:"";position:absolute;z-index:0;pointer-events:none;
   inset:var(--proj-inset-block) var(--proj-inset);
-  background:var(--sand);border-radius:clamp(18px,2vw,28px);
+  background:var(--sand);border-radius:var(--proj-radius);
   box-shadow:0 0 0 1px rgb(44 42 38 / .08);
 }
 @media (max-width:1200px),(max-aspect-ratio:1/1){
@@ -281,7 +286,10 @@ p:last-child{margin-bottom:0}
 /* the open project's photo, blurred and dimmed, fills the panel behind everything */
 .proj-bg{
   position:absolute;inset:var(--proj-inset-block) var(--proj-inset);z-index:0;
-  border-radius:clamp(18px,2vw,28px);overflow:hidden;
+  /* clip-path, not just overflow:hidden: the blurred, fading layer is composited separately and the
+     browser dropped the rounded clip on it, leaving square corners */
+  border-radius:var(--proj-radius);overflow:hidden;
+  clip-path:inset(0 round var(--proj-radius));isolation:isolate;
   background-size:cover;background-position:center;
   opacity:0;
   transition:opacity 1s var(--ease);
@@ -361,7 +369,7 @@ p:last-child{margin-bottom:0}
 .proj-section.is-flying .proj-detail img{
   border-radius:var(--proj-img-radius);overflow:hidden;
 }
-.proj-section.is-flying .proj-slide{z-index:30}
+.proj-section.is-flying .proj-slide{z-index:4}
 .proj-section.is-flying .proj-title-float{position:relative;z-index:40}
 
 /* thin grey outline on the gallery box once a project is open (the photos have no border) */
@@ -556,6 +564,7 @@ p:last-child{margin-bottom:0}
 }
 .ba-item:last-child:nth-child(odd){grid-column:1/-1;max-width:544px;margin-inline:auto}
 .ba{
+  cursor:pointer;
   position:relative;overflow:hidden;border-radius:var(--radius);
   aspect-ratio:4/3;box-shadow:var(--shadow-sm);
 }
@@ -715,7 +724,7 @@ body.lb-open{overflow:hidden}
 
   /* projects: full-width panel, bigger tap targets, swipeable photo */
   .proj-section{--proj-inset:12px;--proj-inset-block:16px}
-  .proj-section::before{border-radius:14px}
+  .proj-section{--proj-radius:14px}
   .proj-section .wrap{padding-inline:22px}
   .proj-section #projHead p{font-size:.92rem;line-height:1.6}
   .proj-carousel{padding:12px;gap:12px}
@@ -740,14 +749,21 @@ body.lb-open{overflow:hidden}
   .about2__more p{font-size:.98rem}
   .about2__sign{font-size:14px}
 
-  /* press: the scan is wide, so it pans from right to left as the page scrolls */
-  /* full-bleed: the scan runs to the screen edges, so it only disappears at the side of the screen
-     (inside the padded column it was being cut off 20px early) */
-  .press__figure{overflow:hidden;border-radius:0;margin-inline:calc(-1 * var(--pad))}
-  .press__figure img{height:240px;width:auto;max-width:none;will-change:transform}
+  /* press: text first, then the wide scan in a full-bleed strip you swipe sideways.
+     It starts at its right end (RTL start), so the left part is hidden until you swipe. */
+  .press .wrap{display:flex;flex-direction:column}
+  .press__card{order:1}
+  .press__figure{
+    order:2;margin-top:22px;
+    overflow-x:auto;overflow-y:hidden;border-radius:0;margin-inline:calc(-1 * var(--pad));
+    -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:none;
+  }
+  .press__figure::-webkit-scrollbar{display:none}
+  /* known proportions, so the strip has width before the photo loads (a 0-wide lazy image never loads) */
+  .press__figure img{height:260px;width:auto;max-width:none;aspect-ratio:1644/638}
   /* no card box on phones: the text sits plainly under the scan */
   .press__card{
-    margin:18px 0 0;padding:0;width:auto;
+    margin:0;padding:0;width:auto;
     background:none;border:0;box-shadow:none;
   }
   .press__card h2{font-size:clamp(1.45rem,6vw,1.8rem)}
