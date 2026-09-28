@@ -1,0 +1,86 @@
+{
+  "categories": [
+    {
+      "slug": "offices",
+      "he": "משרדים",
+      "en": "Offices",
+      "projects": [
+        "auto",
+        "banxso",
+        "naot"
+      ]
+    },
+    {
+      "slug": "residential",
+      "he": "מגורים",
+      "en": "Residential",
+      "projects": [
+        "old",
+        "soft",
+        "mixed"
+      ]
+    }
+  ],
+  "projects": {
+    "auto": {
+      "name": "Auto Chen Momentum",
+      "category": "offices",
+      "src": "auto chen",
+      "pick": "big-only",
+      "drop": [
+        5,
+        6
+      ]
+    },
+    "banxso": {
+      "name": "Banxso Not Your Grandfather's Office",
+      "category": "offices",
+      "src": "banxo",
+      "pick": "all",
+      "drop": [
+        6,
+        7,
+        12,
+        13,
+        16,
+        18,
+        21
+      ],
+      "cover": 4
+    },
+    "naot": {
+      "name": "Naot Legacy Of Perfection",
+      "category": "offices",
+      "src": "naot",
+      "pick": "all",
+      "drop": [
+        2,
+        3,
+        7,
+        14,
+        16,
+        17
+      ],
+      "cover": 6
+    },
+    "old": {
+      "name": "Old Meets New Villa",
+      "category": "residential",
+      "src": "shoham",
+      "pick": "ERZ",
+      "cover": 2
+    },
+    "soft": {
+      "name": "Soft Geometry Apartment",
+      "category": "residential",
+      "src": "rodenski",
+      "pick": "ERZ"
+    },
+    "mixed": {
+      "name": "Mixed Horizon Tel Aviv",
+      "category": "residential",
+      "src": "ofek",
+      "pick": "all"
+    }
+  }
+}

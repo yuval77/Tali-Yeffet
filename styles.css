@@ -17,7 +17,7 @@
   --header-h:76px;
   --wrap:1180px;
   --pad:clamp(20px,5vw,64px);
-  --section:clamp(76px,11vw,150px);
+  --section:clamp(152px,22vw,300px);  /* 2x: vertical space between the home-page sections */
   --radius:14px;
   --shadow:0 24px 60px -34px rgba(44,42,38,.42);
   --shadow-sm:0 12px 30px -20px rgba(44,42,38,.4);
@@ -55,7 +55,6 @@ p:last-child{margin-bottom:0}
 .wrap{max-width:var(--wrap);margin-inline:auto;padding-inline:var(--pad)}
 .section{padding-block:var(--section)}
 .section--sand{background:var(--sand)}
-.section--line{border-top:1px solid var(--line)}
 
 .eyebrow{
   font-size:13px;font-weight:700;letter-spacing:.18em;
@@ -72,14 +71,10 @@ p:last-child{margin-bottom:0}
   border:1px solid transparent;cursor:pointer;
   transition:transform .25s var(--ease),background .25s var(--ease),color .25s var(--ease);
 }
-.btn--clay{background:var(--clay);color:#fff}
-.btn--clay:hover{background:var(--clay-dark);color:#fff;transform:translateY(-2px)}
-.btn--ghost{background:transparent;border-color:var(--ink);color:var(--ink)}
-.btn--ghost:hover{background:var(--ink);color:var(--bg)}
 .btn svg{width:19px;height:19px;flex:none}
 
 /* no double-tap zoom when tapping controls quickly on phones */
-button,a,.proj-visual,.ba,.spec__item{touch-action:manipulation}
+button,a{touch-action:manipulation}
 
 /* reveal on scroll */
 .reveal{opacity:0;transform:translateY(18px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
@@ -114,67 +109,79 @@ button,a,.proj-visual,.ba,.spec__item{touch-action:manipulation}
   .nav a.nav__cta{margin-inline-start:4px}
 }
 
-/* ================= HERO (full-bleed uncropped image bleeding into the page) ================= */
-.hero{
-  /* overflow:clip, not hidden: hidden would turn the hero into a scroll container and break the sticky box */
-  position:relative;background:var(--bg);overflow:clip;
+/* ================= HERO (video shrinks into a rounded, bordered card as you scroll) ================= */
+/* extra scroll room above 100svh: the pin holds still and the video shrinks/rounds while it's consumed */
+/* no pin/extra scroll room: the hero scrolls away at completely normal speed, the shrink
+   is just a transform tied to how far it's scrolled, so scrolling never pauses or holds */
+.hero{position:relative;height:100svh}
+/* phones: 30% shorter, so the next section already peeks in below the video */
+@media (max-width:760px){.hero{height:70svh}}
+.hero__pin{
+  position:relative;height:100%;overflow:hidden;background:var(--bg);
+  --hero-p:0; /* 0 = full-bleed video, 1 = fully shrunk into its rounded frame */
 }
 .hero__bg{
-  position:relative;z-index:0;width:100%;pointer-events:none;font-size:0;line-height:0;
+  position:absolute;z-index:0;pointer-events:none;overflow:hidden;
+  inset:calc(var(--hero-p) * clamp(10px,3vw,34px));
+  border-radius:calc(var(--hero-p) * 26px);
 }
-.hero__bg img{width:100%;height:auto;display:block}
-/* layer over the whole image; the box sits at its bottom-left and sticks to the viewport bottom */
+.hero__bg video{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:cover;display:block}
+/* soft dark scrim behind the text, fading out toward the middle of the video so most of it stays clear */
+.hero__bg::after{
+  content:"";position:absolute;inset:0;z-index:2;
+  background:linear-gradient(to top, rgb(20 18 15 / .62) 0%, rgb(20 18 15 / .32) 30%, transparent 62%);
+}
+/* layer over the whole video; the sentence sits centered, like a single still frame, and fades
+   away early so only the shrinking, framed video is left by the end of the scroll range */
 .hero__inner{
   position:absolute;inset:0;z-index:1;
-  display:flex;flex-direction:column;justify-content:flex-end;
-  /* bottom padding = where the box stops at the end of the hero (100px above the photo bottom) */
-  padding:calc(var(--header-h) + 20px) var(--pad) calc(clamp(20px,4vw,40px) + 100px);
+  display:flex;align-items:center;justify-content:center;
+  padding:calc(var(--header-h) + 20px) var(--pad) 40px;
+  opacity:clamp(0,calc(1 - var(--hero-p) * 2.4),1);
+  pointer-events:none;
 }
-.hero__box.glass{
-  /* whole-pixel offset: a fractional sticky position made the edges shimmer while scrolling */
-  position:sticky;bottom:32px;
-  margin-right:auto;width:min(540px,100%);
-  min-height:min(440px,calc(100svh - var(--header-h) - 60px));
-  /* centered card; space-evenly with no vertical padding: top edge, logo, title, text, bottom edge all get the same gap */
-  display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;
-  gap:20px;text-align:center;
-  padding:20px clamp(28px,3.4vw,44px);
-  /* the blur lives on an oversized ::before that this box clips. Blurring on the box itself only samples
-     pixels inside its own rectangle, which leaves hard lines/halos where photo detail crosses the edges */
-  overflow:hidden;
-  -webkit-backdrop-filter:none;backdrop-filter:none;
-  /* the hero photo is a cutout with a hard dark-to-white edge right under this box; a light tint that
-     thickens toward the bottom hides that seam without changing the look at the top */
-  background:linear-gradient(to bottom,
-    lch(var(--glass-l) var(--glass-c) var(--glass-h) / var(--glass-a)) 0%,
-    lch(var(--glass-l) var(--glass-c) var(--glass-h) / calc(var(--glass-a) + .22)) 100%);
+.hero__box{
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px;
 }
-.hero__box.glass::before{
-  content:"";position:absolute;inset:-60px;z-index:-1;pointer-events:none;
-  /* stronger blur than the other glass boxes: 10px can't melt the photo's cutout edge */
-  -webkit-backdrop-filter:blur(calc(var(--glass-blur) * 2.4)) saturate(var(--glass-saturate)) brightness(var(--glass-bright));
-  backdrop-filter:blur(calc(var(--glass-blur) * 2.4)) saturate(var(--glass-saturate)) brightness(var(--glass-bright));
+.hero__tagline{
+  margin:0;color:#fff;text-wrap:balance;
+  font-family:var(--font);font-weight:600;letter-spacing:.01em;
+  font-size:clamp(2.8rem,6.6vw,6rem);line-height:1.1;
+  text-shadow:0 2px 18px rgb(0 0 0 / .4);
 }
-/* brand zone: logo as a masthead
-   (frameless crop — the original PNG's 2px frame shimmered when scaled) */
-.hero__brand{display:flex;flex-direction:column;align-items:center}
-.hero__logo{width:min(250px,64%);height:auto;display:block;margin:0}
-.hero h1{
-  font-size:clamp(2rem,3.5vw,2.85rem);color:var(--ink);line-height:1.16;
-  max-width:14ch;text-wrap:balance;
+.hero__tagline-accent{
+  display:inline-block;
+  font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-weight:500;
+  font-size:1.35em;line-height:1;
+  margin-inline-start:.12em;
 }
-.hero__lead{
-  margin:0;max-width:44ch;line-height:1.75;
-  font-size:clamp(1rem,1.4vw,1.1rem);color:rgb(44 42 38 / .78);text-wrap:balance;
+.hero__rotator{
+  color:rgb(255 255 255 / .9);font-size:clamp(1.1rem,1.8vw,1.45rem);font-weight:600;
+  text-shadow:0 1px 10px rgb(0 0 0 / .3);
 }
+/* every phrase + its own icon sit in the same grid cell, so the track always sizes itself
+   to whichever one is showing, with no separate "measure the widest item" logic needed */
+.hero__rotator-track{display:grid}
+.hero__rotator-item{
+  grid-row:1;grid-column:1;justify-self:center;
+  display:flex;align-items:center;gap:9px;white-space:nowrap;
+  opacity:0;transform:translateY(10px);
+  transition:opacity .5s var(--ease),transform .5s var(--ease);
+}
+.hero__rotator-item.is-active{opacity:1;transform:none}
+.hero__rotator-ico{
+  flex:none;width:30px;height:30px;border-radius:50%;
+  background:rgb(255 255 255 / .16);border:1px solid rgb(255 255 255 / .4);
+  display:flex;align-items:center;justify-content:center;
+}
+.hero__rotator-ico svg{width:17px;height:17px}
+/* the icon's optical center sits a hair above its box; nudge the text up to meet it */
+.hero__rotator-item span:last-child{transform:translateY(-2px)}
+@media (prefers-reduced-motion:reduce){.hero__rotator-item{transition:opacity .25s linear;transform:none}}
+
 @media (max-width:700px),(max-aspect-ratio:1/1){
-  /* the photo is too short on phones to hold the box: it drops below and overlaps the image edge */
-  .hero__inner{position:relative;inset:auto;display:block;padding:0 var(--pad) 32px;margin-top:-196px}
-  .hero__logo{width:min(190px,60%)}
-  .hero__box.glass{position:relative;bottom:auto;width:auto;min-height:0;gap:20px;background:rgb(255 255 255 / .75);color:var(--ink);border-color:var(--line)}
-  .hero__box.glass::before{display:none}
-  .hero h1{font-size:clamp(1.7rem,7vw,2.2rem)}
-  .hero__lead{color:var(--muted)}
+    .hero__tagline{font-size:clamp(2.3rem,11vw,3.4rem)}
+  .hero__rotator{font-size:1.02rem}
 }
 
 /* ================= ABOUT (large photo beside the full story) ================= */
@@ -200,299 +207,103 @@ button,a,.proj-visual,.ba,.spec__item{touch-action:manipulation}
   .about2__photo{flex-basis:auto;max-width:420px;margin-inline:auto}
 }
 
-/* ================= SPECIALTIES (auto-cycling, Duna-style) ================= */
-/* the image column carries inner padding so the grid row is always taller than the list in any state;
-   the list only changes inside that fixed row, so switching items never moves the page */
-#specialties{padding-bottom:calc(var(--section) + clamp(24px,4vw,56px))}
-.spec{
-  display:grid;grid-template-columns:1fr 1.05fr;
-  gap:clamp(30px,5vw,72px);align-items:stretch;
-}
-.spec__list{align-self:center}
-.spec__list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
-.spec__item{
-  position:relative;width:100%;text-align:start;cursor:pointer;
-  display:flex;align-items:flex-start;gap:16px;
-  padding:18px 20px;border:0;border-radius:8px;overflow:hidden;
-  background:transparent;color:var(--ink);
-  transition:background .45s var(--ease);
-}
-.spec__item{background:var(--sand)}
-.spec__item:hover{background:var(--sand-deep)}
-.spec__item.is-active{background:var(--sand-deep)}
-.spec__item.is-active:hover{background:var(--sand-deep)}
-.spec__ico{flex:none;width:26px;height:26px;margin-top:2px;color:var(--faint);transition:color .4s var(--ease)}
-.spec__ico svg{width:100%;height:100%;display:block}
-.spec__item.is-active .spec__ico{color:var(--clay-dark)}
-.spec__body{display:flex;flex-direction:column;min-width:0}
-.spec__title{font-weight:700;font-size:1.12rem;line-height:1.45}
-/* animate the real height (grid 0fr -> 1fr) instead of max-height: the closing and opening
-   descriptions then move with the same timing, so the list never grows mid-switch and the page doesn't jump */
-.spec__desc{
-  display:grid;grid-template-rows:0fr;
-  color:var(--muted);font-size:.97rem;line-height:1.65;
-  opacity:0;margin-top:0;
-  transition:grid-template-rows .5s var(--ease),margin-top .5s var(--ease),opacity .35s var(--ease);
-}
-.spec__desc > span{overflow:hidden;min-height:0}
-.spec--measure .spec__desc{transition:none}
-.spec__item.is-active .spec__desc{grid-template-rows:1fr;opacity:1;margin-top:8px}
+/* ================= SPECIALTIES (lassie.ai second section: a pinned deck of cards) =================
+   the stage sticks to the screen while the tall .deck track scrolls past it. cards are stacked:
+   the front one slides up and off the screen, the one behind scales/steps forward into its place,
+   and each card's caption fades up on alternating sides (above the card on phones).
+   app.js drives it by setting --t on every item (its position relative to the front of the deck).
+   without JS (or with reduced motion) .deck--live is never added and the cards just list normally. */
+#specialties{padding-bottom:0}
+/* the live deck has no padding of its own: give it the same section gap before the projects band */
+#specialties:has(.deck--live){padding-bottom:var(--section)}
+.section-head--center{margin-inline:auto;text-align:center}
+/* 1.5x the gap between the subtitle and the first card (head margin + the deck stage's own top space) */
+#specialties .section-head--center{margin-bottom:calc(1.5 * clamp(38px,6vw,68px) + 68px)}
+/* the logo keeps its original black; multiply drops the PNG's white background onto the page colour */
+.section-head__logo{width:clamp(255px,27vw,360px);height:auto;margin:0 auto clamp(18px,2.4vw,28px);mix-blend-mode:multiply}
 
-.spec__media{position:relative;padding-block:clamp(28px,4vw,56px);display:flex;flex-direction:column;justify-content:center}
-.spec__frame{
-  position:relative;border-radius:8px;overflow:hidden;
-  aspect-ratio:4/3;background:var(--sand);box-shadow:var(--shadow);
+.deck{--n:4;position:relative;padding:0 var(--pad) var(--section)}
+.deck__frame{display:flex;flex-direction:column;gap:clamp(44px,6vw,80px);max-width:880px;margin-inline:auto}
+.deck__cap h3{font-size:clamp(1.35rem,2.2vw,1.7rem);margin:0 0 10px}
+.deck__cap p{margin:0;color:var(--muted);font-size:1rem;line-height:1.6}
+.deck__item{display:flex;flex-direction:column;gap:18px}
+.deck__card{
+  position:relative;overflow:hidden;background:var(--sand);
+  aspect-ratio:975/614;border-radius:clamp(22px,4.4vw,64px);
+  box-shadow:0 30px 70px -40px rgb(44 42 38 / .45);
 }
-/* the new photo fades in ON TOP of the previous one, which stays fully visible underneath,
-   so a click looks exactly like the automatic change (no dip to the empty frame when clicking fast) */
-.spec__frame img{
-  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  opacity:0;z-index:0;transform:scale(1);
-  transition:opacity 1.5s cubic-bezier(.45,0,.55,1);
-}
-.spec__frame img.is-prev{opacity:1;z-index:1;transition:none}
-.spec__frame img.is-active{opacity:1;z-index:2}
-@media (prefers-reduced-motion:reduce){
-  .spec__frame img{transition:opacity .25s linear}
-}
-@media (max-width:820px),(max-aspect-ratio:1/1){
-  .spec{grid-template-columns:1fr;gap:26px}
-  .spec__media{order:-1;width:100%;max-width:520px;margin-inline:auto;padding-block:0}
-}
+.deck__card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 
-/* ================= PROJECTS (picker card <-> in-place gallery) ================= */
-/* the beige panel is painted by ::before, inset 200px from each side.
-   NOTE: the section keeps its own size and layout, so nothing inside it (gallery, text) changes size. */
-.proj-section{
-  /* 1 : 10 : 1 horizontally -> each side gutter is 1/12 of the section width (not 100vw: that ignores the scrollbar) */
-  --proj-inset:8.3333%;
-  --proj-inset-block:50px;
-  /* same page background as the section above it */
-  position:relative;overflow:clip;background:var(--bg);
-  margin:0;
+/* ---- live (animated) deck ---- */
+.deck--live{
+  /* one viewport of stage + ~85vh of scroll per card change + a short hold on the last card */
+  height:calc(100svh + (var(--n) - 1) * 85vh + 30vh);
+  padding:0;
 }
-.proj-section{--proj-radius:clamp(18px,2vw,28px)}
-.proj-section::before{
-  content:"";position:absolute;z-index:0;pointer-events:none;
-  inset:var(--proj-inset-block) var(--proj-inset);
-  background:var(--sand);border-radius:var(--proj-radius);
-  box-shadow:0 0 0 1px rgb(44 42 38 / .08);
+.deck--live .deck__stage{
+  position:sticky;top:0;height:100svh;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  --cap-w:clamp(190px,18vw,260px);
+  --cap-gap:clamp(24px,3vw,44px);
 }
-@media (max-width:1200px),(max-aspect-ratio:1/1){
-  .proj-section{--proj-inset:max(10px,8.3333%);--proj-inset-block:24px}
+.deck--live .deck__frame{
+  position:relative;display:block;margin:0;max-width:none;
+  width:min(880px, 100vw - 2 * (var(--cap-w) + var(--cap-gap) + 24px), (100svh - 190px) * 975 / 614);
+  aspect-ratio:975/614;
+  transform:translateY(22px);
 }
-.proj-section .wrap{position:relative;z-index:1}
-
-/* the open project's photo, blurred and dimmed, fills the panel behind everything */
-.proj-bg{
-  position:absolute;inset:var(--proj-inset-block) var(--proj-inset);z-index:0;
-  /* clip-path, not just overflow:hidden: the blurred, fading layer is composited separately and the
-     browser dropped the rounded clip on it, leaving square corners */
-  border-radius:var(--proj-radius);overflow:hidden;
-  clip-path:inset(0 round var(--proj-radius));isolation:isolate;
-  background-size:cover;background-position:center;
-  opacity:0;
-  transition:opacity 1s var(--ease);
+.deck--live .deck__item{
+  position:absolute;inset:0;display:block;
+  --t:0;--depth:max(0, -1 * var(--t));--exit:clamp(0, var(--t), 1);
+}
+.deck--live .deck__card{
+  position:absolute;inset:0;
+  /* behind the front: smaller and a little lower so the edges peek out under it;
+     at the front: slides straight up and out of the stage */
+  transform:
+    translateY(calc(var(--exit) * -1 * (50svh + 100%) + min(var(--depth), 3) * 26px))
+    scale(calc(1 - min(var(--depth), 3) * .05));
+  transform-origin:50% 100%;
+  opacity:clamp(0, 3.6 - var(--depth), 1);
+  will-change:transform;
+}
+.deck--live .deck__cap{
+  position:absolute;top:50%;width:var(--cap-w);
+  /* rises/fades in while the card ahead of it leaves (t -.5..-.1), rises away as its own card leaves (t .45...85) */
+  --in:clamp(0, (var(--t) + .5) / .4, 1);
+  --out:clamp(0, (var(--t) - .45) / .4, 1);
+  opacity:calc(var(--in) - var(--out));
+  transform:translateY(calc(-50% + (1 - var(--in)) * 60px - var(--out) * 70px));
   pointer-events:none;
 }
-/* the blur lives on an oversized inner layer that the panel clips, so the panel's own
-   edges stay crisp instead of fading out (edge softness cut by ~80%) */
-.proj-bg::before{
-  content:"";position:absolute;inset:-18px;
-  background-image:inherit;background-size:cover;background-position:center;
-  filter:blur(22px) brightness(.5);
-}
-.proj-section.is-open .proj-bg{opacity:1}
+/* odd items put their caption in the right-hand gutter (RTL start side), even ones in the left.
+   inset-inline-end:100% pushes a box past the card's start edge, i.e. into the start gutter */
+.deck--live .deck__item:nth-child(odd) .deck__cap{inset-inline-end:calc(100% + var(--cap-gap))}
+.deck--live .deck__item:nth-child(even) .deck__cap{inset-inline-start:calc(100% + var(--cap-gap))}
 
-
-/* desktop: heading beside the gallery, whole section = viewport minus 100px */
-/* desktop projects grid: wide enough AND wider than tall (1:1 exactly counts as mobile) */
-@media (min-width:901px) and (min-aspect-ratio:1001/1000){
-  .proj-section.section{
-    --proj-pad:clamp(20px,3.5vh,40px);
-    height:calc(100svh - 100px);min-height:520px;
-    padding-block:var(--proj-pad);
-    display:flex;align-items:center;
+@media (max-width:900px),(max-aspect-ratio:1/1){
+  .deck--live .deck__frame{
+    /* full width of the screen (minus the side padding); the height is capped separately, so on a
+       wide-but-short screen the card just gets wider instead of shrinking to leave empty sides */
+    width:min(100vw - 2 * var(--pad), 880px);
+    height:min((100vw - 2 * var(--pad)) * 346 / 362, 100svh - 260px);
+    aspect-ratio:auto;transform:translateY(50px);
   }
-  .proj-section .wrap{
-    width:100%;
-    /* grid is centered in the section; both columns start at the same top line */
-    display:grid;grid-template-columns:minmax(220px,.8fr) minmax(0,2fr);
-    align-items:start;gap:clamp(28px,4vw,64px);
+  .deck--live .deck__card{aspect-ratio:auto}
+  /* phones: the caption sits above the card, right where the leaving card slides through, so the
+     old caption is gone early (t .05...3) and the next only fades in after the card has passed (t -.35..-.05) */
+  .deck--live .deck__item:nth-child(n) .deck__cap{
+    --in:clamp(0, (var(--t) + .35) / .3, 1);
+    --out:clamp(0, (var(--t) - .05) / .25, 1);
+    inset-inline:0;top:auto;bottom:calc(100% + 22px);width:auto;text-align:center;
+    transform:translateY(calc((1 - var(--in)) * 40px - var(--out) * 50px));
   }
-  /* eyebrow's line-height leaves a gap above the glyphs; pull it up so the text top meets the box top */
-  .proj-section #projHead{margin-bottom:0;margin-top:-26px}
-  .proj-section #projHead h2{font-size:clamp(1.9rem,3.4vw,2.8rem)}
-  /* image width derived from the available height: section - padding - box padding - title row - thumbs row - gaps, x 3/2 */
-  .proj-section .proj-carousel{
-    width:100%;justify-self:center;
-    max-width:calc(max(360px, (100svh - 100px - 2 * var(--proj-pad) - 44px - 40px - 52px - 36px) * 1.5) + 46px);
-  }
-  /* title row and thumbs keep their space when closed, so opening a project never moves the image */
-  .proj-section .proj-title-float{display:flex;visibility:hidden;min-height:40px}
-  .proj-section .proj-thumbs{display:flex;visibility:hidden;min-height:52px}
-  .proj-section.is-open .proj-title-float,.proj-section.is-open .proj-thumbs{visibility:visible}
-}
-.proj-section.is-open{cursor:zoom-out}
-.proj-section.is-open .proj-carousel{cursor:auto}
-
-/* header stays in the layout when a project opens (collapsing it made the page jump); only recolor it */
-#projHead :is(.eyebrow,h2,p){transition:color .5s var(--ease)}
-.proj-section.is-open #projHead :is(.eyebrow,h2,p){color:rgba(255,255,255,.92)}
-
-.proj-title-float{display:none;align-self:stretch;align-items:center;gap:10px;direction:ltr}
-.proj-title-float .proj-back{margin-left:auto}
-.proj-section.is-open .proj-title-float{display:flex}
-.proj-title-float span{display:inline-block;direction:rtl;font-size:clamp(1.3rem,3vw,1.8rem);font-weight:700;color:#fff;line-height:1.2;text-shadow:0 1px 10px rgb(0 0 0 / .45)}
-
-/* padding is constant so the card never shifts sideways; the box only becomes visible when open */
-.proj-carousel{
-  display:flex;flex-direction:column;align-items:center;gap:18px;
-  max-width:724px;margin-inline:auto;padding:22px;
-  border:1px solid transparent;border-radius:14px;
-  transition:background .5s var(--ease),border-color .5s var(--ease),box-shadow .5s var(--ease);
-}
-/* glass look (see .glass) only while a project is open */
-.proj-section:not(.is-open) .proj-carousel.glass{
-  background:transparent;border-color:transparent;box-shadow:none;
-  -webkit-backdrop-filter:none;backdrop-filter:none;
-}
-/* while a title flies between the card corner and the row above, it must sit above everything
-   and not be cut off by the image's rounded clip */
-.proj-slide__title span.is-flying,.proj-title-float span.is-flying{position:relative;z-index:40}
-.proj-section.is-flying .proj-visual{overflow:visible}
-/* keep the photos' rounded corners while the frame is temporarily unclipped
-   (border-radius:inherit resolved to 0 here, which flashed sharp corners mid-transition) */
-.proj-section.is-flying .proj-slide__frame,
-.proj-section.is-flying .proj-slide__frame img,
-.proj-section.is-flying .proj-detail,
-.proj-section.is-flying .proj-detail img{
-  border-radius:var(--proj-img-radius);overflow:hidden;
-}
-.proj-section.is-flying .proj-slide{z-index:4}
-.proj-section.is-flying .proj-title-float{position:relative;z-index:40}
-
-/* thin grey outline on the gallery box once a project is open (the photos have no border) */
-.proj-section.is-open .proj-carousel.glass{border:1px solid rgb(158 158 158 / .85)}
-
-/* the card itself */
-.proj-visual{
-  --proj-img-radius:10px;
-  position:relative;width:100%;
-  aspect-ratio:3/2;border-radius:var(--proj-img-radius);overflow:hidden;
-  background:var(--sand-deep);box-shadow:var(--shadow);
-}
-
-/* projects crossfade: slides are stacked; the outgoing one fades out while the next fades in,
-   over 0.5s on a soft ease-in-out curve (no hard cut, no instant pop-in) */
-.proj-slide{
-  position:absolute;inset:0;display:block;
-  opacity:0;visibility:hidden;pointer-events:none;
-  transition:opacity .5s cubic-bezier(.45,0,.55,1),visibility 0s linear .5s;
-}
-.proj-slide.is-active{
-  opacity:1;visibility:visible;pointer-events:auto;z-index:1;
-  transition:opacity .5s cubic-bezier(.45,0,.55,1),visibility 0s;
-}
-@keyframes projFade{from{opacity:0}to{opacity:1}}
-@media (prefers-reduced-motion:reduce){.proj-slide,.proj-slide.is-active{transition:none}}
-/* when a project opens, the browsing photo stays fully visible UNDER the project view, which fades in/out
-   on top. (Fading both at once made the picture dip to the empty card colour mid-transition.) */
-.proj-section.is-open .proj-slide{pointer-events:none}
-.proj-section.is-open .proj-slide__title{visibility:hidden}
-
-.proj-slide__frame{
-  position:relative;display:block;width:100%;height:100%;border:0;padding:0;margin:0;cursor:pointer;background:none;
-}
-.proj-slide__frame--soon{cursor:default}
-.proj-slide__frame img{width:100%;height:100%;object-fit:cover;display:block;transition:filter .5s var(--ease)}
-.proj-slide__frame--soon img{filter:grayscale(.5) brightness(.92)}
-.proj-slide__title{
-  position:absolute;top:16px;left:18px;z-index:2;pointer-events:none;margin:0;
-  font-size:clamp(1.2rem,2.6vw,1.6rem);font-weight:700;color:#fff;line-height:1.2;
-  text-shadow:0 1px 10px rgba(0,0,0,.45);
-  display:flex;align-items:center;gap:8px;direction:ltr;
-}
-.proj-slide__title span{direction:rtl}
-.proj-slide__arrow{width:22px;height:22px;flex:none;filter:drop-shadow(0 1px 4px rgba(0,0,0,.45))}
-.project__badge{
-  position:absolute;inset-block-start:16px;inset-inline-start:16px;z-index:2;
-  background:rgba(251,250,247,.94);color:var(--ink);
-  font-size:12px;font-weight:700;letter-spacing:.08em;
-  padding:7px 13px;border-radius:999px;
-}
-
-/* in-place detail viewer, overlays the whole card */
-.proj-detail{
-  position:absolute;inset:0;z-index:3;
-  opacity:0;pointer-events:none;transition:opacity .5s var(--ease);
-}
-.proj-section.is-open .proj-detail{opacity:1;pointer-events:auto}
-.proj-detail img{width:100%;height:100%;object-fit:cover;display:block}
-
-.proj-back{
-  flex:none;
-  width:40px;height:40px;border-radius:50%;border:1px solid rgba(44,42,38,.14);cursor:pointer;
-  background:var(--white);color:var(--ink);
-  display:flex;align-items:center;justify-content:center;
-  opacity:0;pointer-events:none;
-  transition:opacity .3s var(--ease),background .2s var(--ease);
-}
-.proj-section.is-open .proj-back{opacity:1;pointer-events:auto}
-.proj-back:hover{background:var(--white)}
-.proj-back svg{width:18px;height:18px}
-
-/* nav + dots: rounded-square buttons bottom-left, dots bottom-right - as in the reference card */
-.proj-nav-group{position:absolute;bottom:18px;left:18px;z-index:5;display:flex;gap:8px}
-.proj-nav{
-  width:44px;height:44px;border-radius:12px;border:0;cursor:pointer;
-  background:rgba(255,255,255,.92);color:var(--ink);
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 14px -6px rgba(0,0,0,.35);
-  transition:background .2s var(--ease),transform .15s var(--ease);
-}
-.proj-nav:hover{background:var(--white)}
-.proj-nav:active{transform:scale(.94)}
-.proj-nav svg{width:17px;height:17px}
-
-.proj-dots{
-  position:absolute;bottom:30px;right:18px;z-index:5;display:flex;gap:7px;
-  filter:drop-shadow(0 1px 3px rgba(0,0,0,.45));
-  transition:opacity .3s var(--ease),transform .3s var(--ease);
-}
-.proj-dots button{width:7px;height:7px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.6);cursor:pointer;transition:background .2s var(--ease),transform .2s var(--ease)}
-.proj-dots button.is-active{background:var(--clay);transform:scale(1.35)}
-.proj-section.is-open .proj-dots{opacity:0;transform:translateY(6px);pointer-events:none}
-
-/* mini gallery thumbnail strip, below the card in the open state */
-.proj-thumbs{
-  display:none;align-items:center;gap:8px;max-width:100%;
-  overflow-x:auto;flex-wrap:nowrap;padding-block:2px;
-  scrollbar-width:none;-ms-overflow-style:none;
-}
-.proj-thumbs::-webkit-scrollbar{display:none}
-.proj-section.is-open .proj-thumbs{display:flex;animation:projFade .5s var(--ease)}
-.proj-thumbs > :first-child{margin-inline-start:auto}
-.proj-thumbs > :last-child{margin-inline-end:auto}
-.proj-thumb{
-  flex:none;width:48px;height:48px;border-radius:8px;padding:0;border:0;
-  overflow:hidden;cursor:pointer;opacity:.6;transition:opacity .2s var(--ease),border-color .2s var(--ease);
-}
-.proj-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.proj-thumb:hover{opacity:.9}
-.proj-thumb.is-active{opacity:1}
-
-@media (max-width:600px){
-  .proj-carousel{padding:12px}
-  .proj-visual{aspect-ratio:4/3;--proj-img-radius:8px}
-  .proj-nav{width:38px;height:38px;border-radius:10px}
-  .proj-nav svg{width:15px;height:15px}
+  .deck__card{border-radius:24px}
 }
 
 /* ================= GLASS PANEL (frosted box that takes its colour from whatever is behind it) =================
    usage: <div class="glass">…</div> placed over an image/background.
-   tune per use with the custom properties, e.g. style="--glass-blur:30px"
-   .glass--light = milky white glass with dark text (for bright photos) */
+   tune per use with the custom properties, e.g. style="--glass-blur:30px" */
 /* settings live on :root so one place drives every glass box.
    default: pure blur, tint opacity 0 = no colour of its own */
 :root{
@@ -515,20 +326,9 @@ button,a,.proj-visual,.ba,.spec__item{touch-action:manipulation}
   border:1px solid rgb(255 255 255 / var(--glass-border-a));
   box-shadow:inset 0 1px 0 rgb(255 255 255 / var(--glass-highlight-a));
 }
-.glass--light{background:rgb(255 255 255 / .55)}
-/* optional: the white-to-gold tinted version */
-.glass--gold{
-  --glass-gold:201 164 106;--glass-saturate:140%;--glass-bright:1.12;
-  background:
-    radial-gradient(120% 80% at 100% 100%, rgb(var(--glass-gold) / .38) 0%, transparent 70%),
-    linear-gradient(160deg, rgb(255 255 255 / .36) 0%, rgb(255 255 255 / .15) 55%, rgb(var(--glass-gold) / .3) 100%);
-  border-color:rgb(var(--glass-gold) / .45);
-  box-shadow:inset 0 1px 0 rgb(255 255 255 / .35),inset 0 -20px 40px -30px rgb(var(--glass-gold) / .5),0 10px 30px -22px rgb(150 116 76 / .35);
-}
 /* browsers without backdrop-filter: fall back to a more opaque tint so text stays readable */
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
   .glass{background:rgb(255 255 255 / .85)}
-  .glass--light{background:rgb(255 255 255 / .88)}
 }
 
 /* ================= PRESS / HOME STAGING ================= */
@@ -553,60 +353,57 @@ button,a,.proj-visual,.ba,.spec__item{touch-action:manipulation}
   .press__card{width:auto;margin:-28px 12px 0}
 }
 
-/* ================= BEFORE / AFTER (auto crossfade, no slider) ================= */
-#beforeafter{padding-block:clamp(48px,7vw,90px)}
-#beforeafter .section-head{margin-bottom:clamp(24px,3.5vw,40px)}
-/* 15% smaller images, tighter vertical rhythm */
-.ba-list{
-  display:grid;grid-template-columns:repeat(2,1fr);
-  column-gap:clamp(20px,3vw,36px);row-gap:clamp(14px,1.8vw,22px);
-  width:85%;margin-inline:auto;
+/* ================= CONTACT / FOOTER (lassie.ai footer) =================
+   main + the footer card sit above a fixed full-screen layer (.foot-reveal). the card has a big
+   bottom margin, so the last bit of scrolling slides it up and uncovers the gradient + giant
+   wordmark underneath, which never moves. */
+main{position:relative;z-index:1;background:var(--bg)}
+.site-foot{
+  --reveal-h:calc(19.5vw + 20px);
+  position:relative;z-index:1;background:var(--white);
+  border-radius:0 0 clamp(32px,4.4vw,64px) clamp(32px,4.4vw,64px);
+  margin-bottom:var(--reveal-h);
+  box-shadow:0 30px 60px -40px rgb(44 42 38 / .25);
 }
-.ba-item:last-child:nth-child(odd){grid-column:1/-1;max-width:544px;margin-inline:auto}
-.ba{
-  cursor:pointer;
-  position:relative;overflow:hidden;border-radius:var(--radius);
-  aspect-ratio:4/3;box-shadow:var(--shadow-sm);
+.site-foot__inner{
+  max-width:1180px;margin-inline:auto;
+  display:flex;flex-direction:column;align-items:center;gap:clamp(40px,5vw,64px);
+  padding:clamp(112px,16vw,192px) clamp(20px,3.2vw,48px) clamp(22px,2.6vw,32px);
 }
-.ba img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
-.ba__before{opacity:1;transition:opacity .9s var(--ease)}
-.ba.is-after .ba__before{opacity:0}
-.ba__tag{
-  position:absolute;inset-block-end:14px;left:50%;transform:translateX(-50%);
-  font-size:12px;font-weight:700;letter-spacing:.1em;
-  color:#fff;background:rgba(28,26,23,.55);padding:6px 12px;border-radius:999px;
-  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
-}
-@media (max-width:760px),(max-aspect-ratio:1/1){.ba-list{grid-template-columns:1fr;width:100%;max-width:440px}}
-
-.is-placeholder{color:var(--clay-dark);font-weight:700}
-
-/* ================= CONTACT ================= */
-#contact{position:relative;overflow:hidden;z-index:0}
-/* wider column so the footer row fits on one line; the headline and sub stay narrow */
-.contact-cta{position:relative;max-width:1060px;margin-inline:auto;text-align:center}
-
-.contact-cta .eyebrow{text-align:center}
-.contact-cta h2{font-size:clamp(2rem,4.8vw,3.4rem);margin:0 auto 16px;max-width:16ch}
-.contact-cta__sub{color:var(--muted);max-width:46ch;margin-inline:auto;margin-bottom:36px}
-.contact-cta .btn--dark{margin-inline:auto}
-
+.site-foot__lead{max-width:100%;text-align:center;display:flex;flex-direction:column;align-items:center}
+.site-foot__title{white-space:nowrap;font-size:min(clamp(3rem,5.85vw,4.95rem), (100vw - 48px) / 10.5);line-height:1.08;margin:0 0 18px}
+.site-foot__title-accent{color:var(--clay)}
+.site-foot__sub{color:var(--muted);margin-bottom:28px}
 .btn--dark{background:var(--ink);color:var(--bg)}
 .btn--dark:hover{background:var(--clay-dark);color:#fff;transform:translateY(-2px)}
-
-.contact-cta__divider{border:0;border-top:1px solid var(--line);margin-block:56px 26px}
-.contact-cta__foot{
-  display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
-  color:var(--faint);font-size:13.5px;
+/* bottom line: copyright at the right (RTL start), copy-email mirrored to the left */
+.site-foot__bar{
+  align-self:stretch;display:flex;justify-content:space-between;align-items:center;gap:12px 24px;flex-wrap:wrap;
+  padding-top:20px;border-top:1px solid var(--line);
+  font-size:13.5px;color:var(--faint);
 }
-.contact-cta__foot-links{display:flex;align-items:center;gap:22px}
-
+.site-foot__bar p{margin:0}
+.site-foot__contact{display:flex;align-items:center;gap:26px}
 .social-ico{
-  display:flex;align-items:center;justify-content:center;color:var(--faint);
+  display:flex;align-items:center;justify-content:center;color:var(--muted);
   transition:color .2s var(--ease),transform .2s var(--ease);
 }
 .social-ico:hover{color:var(--clay-dark);transform:translateY(-2px)}
 .social-ico svg{width:20px;height:20px}
+.site-foot__bar .copy-email{color:var(--muted);font-size:13.5px;margin-inline-start:4px}
+.site-foot__bar .copy-email:hover{color:var(--clay-dark)}
+
+.foot-reveal{
+  position:fixed;inset-inline:0;bottom:0;z-index:0;height:100svh;
+  background:linear-gradient(180deg,#fff 0%,var(--bg) 30%,#E8D9C6 100%);
+  display:flex;align-items:flex-end;justify-content:center;overflow:hidden;pointer-events:none;
+}
+.foot-reveal__word{
+  direction:ltr;white-space:nowrap;user-select:none;
+  font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;
+  font-size:24vw;line-height:.8;letter-spacing:-.01em;color:#fff;
+  margin-bottom:1.2vw;
+}
 
 .copy-email{
   display:inline-flex;align-items:center;gap:8px;border:0;background:none;cursor:pointer;
@@ -616,20 +413,13 @@ button,a,.proj-visual,.ba,.spec__item{touch-action:manipulation}
 .copy-ico{width:18px;height:18px;transition:color .2s var(--ease)}
 .copy-email.copied .copy-ico{color:#3f8a5c}
 
-@media (max-width:600px){
-  .contact-cta__foot{flex-direction:column;text-align:center}
+@media (max-width:900px),(max-aspect-ratio:1/1){
 }
+@media (max-width:760px){
+  .site-foot{--reveal-h:calc(18vw + 16px)}
+  .foot-reveal__word{font-size:22vw}
 
-/* ================= FOOTER WATERMARK (in-flow, bottom-left of the section only) ================= */
-.contact-cta__watermark{
-  position:absolute;inset-block-end:-.16em;left:0;z-index:-1;
-  direction:ltr;line-height:.8;
-  font-family:'Cormorant Garamond',Georgia,serif;
-  font-size:16vw;font-weight:600;letter-spacing:.01em;
-  color:var(--ink);opacity:.07;
-  white-space:nowrap;pointer-events:none;user-select:none;
 }
-@media (min-width:1180px){.contact-cta__watermark{font-size:200px}}
 
 /* ================= FLOATING WHATSAPP ================= */
 .wa-fab{
@@ -648,56 +438,18 @@ button,a,.proj-visual,.ba,.spec__item{touch-action:manipulation}
 }
 @keyframes pulse{0%{transform:scale(1);opacity:.7}70%{transform:scale(1.5);opacity:0}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.wa-fab::after{animation:none}}
+/* pops out of existence once the footer (contact) is on screen, and pops back when you scroll up */
+.wa-fab{transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .25s var(--ease)}
+body.at-contact .wa-fab{transform:scale(0);opacity:0;pointer-events:none;transition:transform .3s cubic-bezier(.36,0,.66,-.56),opacity .3s var(--ease)}
+body.at-contact .wa-fab::after{display:none}
 @media (max-width:600px){.wa-fab{width:54px;height:54px;inset-block-end:16px;inset-inline-start:16px}}
-
-/* ================= LIGHTBOX ================= */
-.lightbox{
-  position:fixed;inset:0;z-index:100;display:none;
-  background:rgba(24,22,19,.94);
-  align-items:center;justify-content:center;
-}
-.lightbox.open{display:flex}
-body.lb-open{overflow:hidden}
-.lightbox__stage{
-  position:relative;max-width:min(1200px,92vw);max-height:86vh;
-  display:flex;align-items:center;justify-content:center;
-}
-.lightbox__stage img{
-  max-width:100%;max-height:86vh;width:auto;height:auto;
-  border-radius:8px;box-shadow:0 30px 80px -20px rgba(0,0,0,.6);
-}
-.lightbox__bar{
-  position:absolute;inset-block-start:0;inset-inline:0;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:22px clamp(16px,4vw,40px);color:#fff;z-index:2;
-}
-.lightbox__title{font-weight:700;font-size:15px;letter-spacing:.04em}
-.lightbox__count{font-size:13px;color:rgba(255,255,255,.7);font-weight:600;direction:ltr}
-.lb-btn{
-  border:0;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;
-  width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  transition:background .2s var(--ease);
-}
-.lb-btn:hover{background:rgba(255,255,255,.24)}
-.lb-btn svg{width:20px;height:20px}
-.lightbox__close{position:absolute;inset-block-start:18px;inset-inline-end:clamp(16px,4vw,40px);z-index:3}
-.lightbox__nav{
-  position:absolute;inset-block-start:50%;transform:translateY(-50%);
-  display:flex;justify-content:space-between;width:100%;
-  padding-inline:clamp(8px,3vw,28px);pointer-events:none;
-}
-.lightbox__nav .lb-btn{pointer-events:auto;width:52px;height:52px}
-@media (max-width:600px){
-  .lightbox__nav{position:static;transform:none;margin-top:16px;padding:0;gap:20px;justify-content:center}
-  .lightbox__stage{flex-direction:column}
-}
 
 /* ============================================================
    MOBILE LAYER (<=760px) — layout/sizing only; the desktop view above is untouched
    ============================================================ */
 @media (max-width:760px),(max-aspect-ratio:1/1){
   :root{
-    --section:56px;
+    --section:112px;
     --pad:20px;
   }
   body{font-size:16px;line-height:1.7}
@@ -709,39 +461,7 @@ body.lb-open{overflow:hidden}
   .eyebrow{font-size:11.5px;letter-spacing:.14em;margin-bottom:12px}
 
   /* hero */
-  .hero__box.glass{padding:26px 22px;gap:16px}
-  .hero__logo{width:min(165px,55%)}
-  .hero h1{font-size:clamp(1.5rem,6.4vw,1.9rem)}
-  .hero__lead{font-size:.98rem;line-height:1.65}
-
-  /* specialties: photo first, then a tighter list */
-  .spec{gap:18px}
-  .spec__item{padding:13px 14px;gap:12px}
-  .spec__ico{width:22px;height:22px}
-  .spec__title{font-size:1.02rem}
-  .spec__desc{font-size:.92rem;line-height:1.6}
-  .spec__frame{border-radius:10px}
-
-  /* projects: full-width panel, bigger tap targets, swipeable photo */
-  .proj-section{--proj-inset:12px;--proj-inset-block:16px}
-  .proj-section{--proj-radius:14px}
-  .proj-section .wrap{padding-inline:22px}
-  .proj-section #projHead p{font-size:.92rem;line-height:1.6}
-  .proj-carousel{padding:12px;gap:12px}
-  .proj-visual{aspect-ratio:4/3}
-  .proj-nav{width:42px;height:42px}
-  .proj-nav-group{bottom:12px;left:12px;gap:10px}
-  .proj-dots{bottom:22px;right:12px}
-  .proj-slide__title{top:12px;left:12px;font-size:1.05rem}
-  .proj-title-float span{font-size:1.15rem}
-  .proj-back{width:36px;height:36px}
-  .proj-thumbs{gap:6px}
-  .proj-thumb{width:40px;height:40px}
-
-  /* before / after */
-  .ba-list{row-gap:16px}
-  .ba{border-radius:10px}
-  .ba__tag{inset-block-end:10px;font-size:11px;padding:5px 10px}
+    .hero__tagline{font-size:clamp(2.2rem,10.5vw,3rem)}
 
   /* about */
   .about2{gap:22px}
@@ -761,60 +481,110 @@ body.lb-open{overflow:hidden}
   .press__figure::-webkit-scrollbar{display:none}
   /* known proportions, so the strip has width before the photo loads (a 0-wide lazy image never loads) */
   .press__figure img{height:260px;width:auto;max-width:none;aspect-ratio:1644/638}
-  /* no card box on phones: the text sits plainly under the scan */
+  /* the colored text box stays on phones too */
   .press__card{
-    margin:0;padding:0;width:auto;
-    background:none;border:0;box-shadow:none;
+    margin:0;padding:24px 22px;width:auto;
+    background:var(--sand);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-sm);
   }
   .press__card h2{font-size:clamp(1.45rem,6vw,1.8rem)}
   .press__card p{font-size:.96rem}
 
   /* contact */
-  .contact-cta h2{font-size:clamp(1.7rem,7.4vw,2.1rem)}
-  .contact-cta__sub{margin-bottom:26px;font-size:.98rem}
-  .contact-cta__divider{margin-block:34px 20px}
-  .contact-cta__foot{gap:14px;justify-content:center}
-  .contact-cta__foot-links{gap:clamp(18px,7vw,34px)}
+  .site-foot__title{font-size:min(clamp(2.7rem,12vw,3.45rem), (100vw - 40px) / 10.5)}
+  .site-foot__bar{flex-direction:column;justify-content:center;text-align:center;gap:14px}
+  .site-foot__contact{gap:clamp(18px,7vw,30px)}
   .social-ico svg{width:22px;height:22px}
-  .copy-email{font-size:13px}
-  .contact-cta__watermark{font-size:88px;letter-spacing:.06em}
+  .site-foot__sub{font-size:.98rem;margin-bottom:22px}
 
-  /* floating whatsapp button clear of the thumb strip; it shrinks away inside the contact section */
-  .wa-fab{width:52px;height:52px;transition:transform .35s var(--ease),opacity .35s var(--ease)}
-  body.at-contact .wa-fab{transform:scale(0);opacity:0;pointer-events:none}
-  body.at-contact .wa-fab::after{display:none}
+  .wa-fab{width:52px;height:52px}
 }
 
-/* below the desktop grid breakpoint, keep the title row and the thumb strip in the layout at all
-   times, so the beige panel / photo background is exactly the same size in both project modes.
-   (must come after the .proj-* rules above, which would otherwise win) */
-@media (max-width:900px),(max-aspect-ratio:1/1){
-  .proj-section .proj-title-float{display:flex;visibility:hidden;min-height:36px}
-  .proj-section .proj-thumbs{display:flex;visibility:hidden;min-height:44px}
-  .proj-section.is-open .proj-title-float,.proj-section.is-open .proj-thumbs{visibility:visible}
+/* ============================================================
+   CATEGORY TILES (home) · CATEGORY PAGES · PROJECT PAGES
+   ============================================================ */
+.cats{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,2vw,28px)}
+.cat-tile,.cat-card,.pj-next{
+  position:relative;display:block;overflow:hidden;border-radius:var(--radius);
+  background:var(--sand-deep);color:var(--ink);box-shadow:var(--shadow);
+}
+.cat-tile{aspect-ratio:4/5}
+.cat-tile img,.cat-card img,.pj-next img{
+  width:100%;height:100%;object-fit:cover;display:block;transition:transform 1.1s var(--ease);
+}
+.cat-tile:hover img,.cat-card:hover img,.pj-next:hover img{transform:scale(1.04)}
+.cat-tile__label,.cat-card__label,.pj-next__label{
+  position:absolute;inset-inline:14px;inset-block-end:14px;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:14px 20px;border-radius:12px;
+  background:rgb(255 255 255 / .9);color:var(--ink);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+}
+.cat-tile__name{font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.cat-card__name,.pj-next__name{
+  direction:ltr;font-family:"Cormorant Garamond",Georgia,serif;
+  font-size:clamp(1.35rem,2.8vw,2.1rem);font-weight:700;line-height:1.15;text-wrap:balance;
+}
+.cat-card__go{
+  display:inline-flex;align-items:center;gap:8px;direction:ltr;
+  font-size:15px;font-weight:700;letter-spacing:.04em;white-space:nowrap;color:var(--clay-dark);
+}
+.cat-card__go svg{width:18px;height:18px;transform:scaleX(-1);transition:transform .3s var(--ease)}
+.cat-tile:hover .cat-card__go svg,.cat-card:hover .cat-card__go svg,.pj-next:hover .cat-card__go svg{transform:scaleX(-1) translateX(-4px)}
+
+/* sub pages share the floating header; leave room for it */
+.subpage main{padding-block-start:78px}
+.cat{width:min(100% - 2*var(--pad),1180px);margin-inline:auto;padding-block-end:clamp(40px,6vw,80px)}
+.cat__title{font-size:clamp(2rem,5vw,3.4rem);margin:clamp(18px,4vw,44px) 0 clamp(18px,3vw,32px)}
+.cat__list{display:flex;flex-direction:column;gap:clamp(14px,2vw,28px)}
+.cat-card{height:clamp(320px,72svh,760px)}
+
+.pj-head{
+  width:min(100% - 2*var(--pad),1180px);margin-inline:auto;
+  padding-block:clamp(18px,4vw,44px) clamp(14px,2.4vw,26px);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
+}
+.pj-title{
+  direction:ltr;font-family:"Cormorant Garamond",Georgia,serif;
+  font-size:clamp(2rem,5.4vw,4.2rem);font-weight:700;line-height:1.05;letter-spacing:-.01em;
+  text-wrap:balance;max-width:20ch;color:var(--ink);
+}
+.pj-back{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:16px;color:var(--ink)}
+.pj-back svg{width:18px;height:18px;transform:scaleX(-1)}
+.pj-shots{display:flex;flex-direction:column;gap:clamp(10px,1.6vw,20px);padding-inline:clamp(8px,1.2vw,16px)}
+.pj-shot{margin:0;display:flex;justify-content:center;background:var(--bg)}
+/* never cropped: the whole photo is shown, scaled down to fit one screen height if needed */
+.pj-shot img{
+  --max-h:calc(100svh - 24px);
+  width:min(100%,calc(var(--max-h) * var(--r)));height:auto;aspect-ratio:var(--r);
+  display:block;border-radius:var(--radius);box-shadow:var(--shadow-sm);
+}
+.pj-next{margin:clamp(14px,2vw,28px) clamp(8px,1.2vw,16px) 0;height:clamp(260px,55svh,560px)}
+
+.subfoot{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  width:min(100% - 2*var(--pad),1180px);margin-inline:auto;padding-block:clamp(28px,5vw,56px);
+  color:var(--faint);font-size:14px;
+}
+@media (max-width:760px){
+  .cats{grid-template-columns:1fr}
+  .cat-tile{aspect-ratio:4/3}
+  .cat-tile__label,.cat-card__label,.pj-next__label{inset-inline:10px;inset-block-end:10px;padding:12px 14px}
 }
 
-/* mobile hero photo: 60% larger, cropped evenly on both sides */
-@media (max-width:760px),(max-aspect-ratio:1/1){
-  .hero__bg{overflow:hidden}
-  /* max-width:none, otherwise the global img{max-width:100%} caps it back to the screen width */
-  .hero__bg img{width:160%;max-width:none;margin-inline-start:-30%}
-}
+/* about shares the press section's white */
+#about{background:var(--white)}
 
-/* specialties on mobile: each item carries its own photo instead of one shared frame */
-.spec__photo{display:none}
-@media (max-width:760px),(max-aspect-ratio:1/1){
-  .spec__media{display:none}
-  .spec{display:block}
-  .spec__list{min-height:0 !important}
-  .spec__item{align-items:flex-start}
-  .spec__photo{
-    display:block;overflow:hidden;max-height:0;opacity:0;margin-top:0;
-    transition:max-height .5s var(--ease),margin-top .5s var(--ease),opacity .35s var(--ease);
-  }
-  .spec__photo img{
-    width:100%;object-fit:cover;aspect-ratio:4/3;
-    border-radius:10px;display:block;
-  }
-  .spec__item.is-active .spec__photo{max-height:60vw;opacity:1;margin-top:12px}
+/* "next project" label sits on the top of its image */
+.pj-next__label{inset-block-start:14px;inset-block-end:auto}
+@media (max-width:760px){.pj-next__label{inset-block-start:10px;inset-block-end:auto}}
+
+/* projects: a sand card floating on the page (lassie.ai's closing CTA card), inset from the
+   screen edges with filleted corners; the content sits inside it with its own breathing room */
+/* behind the card: the page colour of the section above fades into the white of the about section below */
+.projects-band{background:linear-gradient(180deg,var(--bg) 0%,var(--white) 100%)}
+#projects{
+  background:var(--sand);
+  margin-inline:clamp(12px,1.8vw,26px);
+  border-radius:clamp(24px,3.6vw,52px);
+  padding-block:clamp(56px,8vw,112px);
 }
