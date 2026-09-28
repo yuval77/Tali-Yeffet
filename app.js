@@ -11,6 +11,7 @@
   var CONFIG = {
     whatsapp:        '972548118833',
     whatsappDisplay: '054-811-8833',
+    whatsappMessage: 'היי טלי, הגעתי אלייך דרך האתר ואשמח לשמוע על תהליך עיצוב הפנים ולבדוק התאמה לפרויקט שלי',
     phone:           '054-811-8833',
     email:           'tyeffet@gmail.com',
     instagram:       'https://www.instagram.com/taliy_design/',
@@ -185,8 +186,8 @@
 
   /* ================= CONFIG INTO DOM ================= */
   function applyConfig() {
-    // opens the chat directly, with no pre-filled message
-    var waHref = 'https://wa.me/' + CONFIG.whatsapp;
+    // opens the chat with the greeting above already typed in
+    var waHref = 'https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent(CONFIG.whatsappMessage);
     $$('[data-wa]').forEach(function (a) {
       a.setAttribute('href', waHref);
       a.setAttribute('target', '_blank');

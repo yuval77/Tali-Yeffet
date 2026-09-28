@@ -392,7 +392,7 @@ main{position:relative;z-index:1;background:var(--bg)}
   transition:color .2s var(--ease),transform .2s var(--ease);
 }
 .social-ico:hover{color:var(--clay-dark);transform:translateY(-2px)}
-.social-ico svg{width:20px;height:20px}
+.social-ico img{width:20px;height:20px;display:block}
 .site-foot__bar .copy-email{color:var(--muted);font-size:13.5px;margin-inline-start:4px}
 .site-foot__bar .copy-email:hover{color:var(--clay-dark)}
 
@@ -496,7 +496,7 @@ body.at-contact .wa-fab::after{display:none}
   .site-foot__title{font-size:min(clamp(2.7rem,12vw,3.45rem), (100vw - 40px) / 10.5)}
   .site-foot__bar{flex-direction:column;justify-content:center;text-align:center;gap:14px}
   .site-foot__contact{gap:clamp(18px,7vw,30px)}
-  .social-ico svg{width:22px;height:22px}
+  .social-ico img{width:22px;height:22px}
   .site-foot__sub{font-size:.98rem;margin-bottom:22px}
 
   .wa-fab{width:52px;height:52px}
