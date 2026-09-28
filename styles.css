@@ -145,13 +145,13 @@ button,a{touch-action:manipulation}
 }
 .hero__tagline{
   margin:0;color:#fff;text-wrap:balance;
-  font-family:var(--font);font-weight:600;letter-spacing:.01em;
+  font-family:"Marmelad","Assistant",sans-serif;font-weight:400;letter-spacing:.01em;
   font-size:clamp(2.8rem,6.6vw,6rem);line-height:1.1;
   text-shadow:0 2px 18px rgb(0 0 0 / .4);
 }
 .hero__tagline-accent{
   display:inline-block;
-  font-family:"Cormorant Garamond",Georgia,serif;font-style:italic;font-weight:500;
+  font-family:"Dancing Script",cursive;font-style:normal;font-weight:600;
   font-size:1.35em;line-height:1;
   margin-inline-start:.12em;
 }
@@ -403,7 +403,7 @@ main{position:relative;z-index:1;background:var(--bg)}
 }
 .foot-reveal__word{
   direction:ltr;white-space:nowrap;user-select:none;
-  font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;
+  font-family:"Dancing Script",cursive;font-weight:600;
   font-size:24vw;line-height:.8;letter-spacing:-.01em;color:#fff;
   margin-bottom:1.2vw;
 }
@@ -524,12 +524,12 @@ body.at-contact .wa-fab::after{display:none}
 }
 .cat-tile__name{font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;letter-spacing:-.02em;line-height:1.1}
 .cat-card__name,.pj-next__name{
-  direction:ltr;font-family:"Cormorant Garamond",Georgia,serif;
+  direction:ltr;font-family:"Dancing Script",cursive;
   font-size:clamp(1.35rem,2.8vw,2.1rem);font-weight:700;line-height:1.15;text-wrap:balance;
 }
 .cat-card__go{
   display:inline-flex;align-items:center;gap:8px;direction:ltr;
-  font-size:15px;font-weight:700;letter-spacing:.04em;white-space:nowrap;color:var(--clay-dark);
+  font-family:"Marmelad","Assistant",sans-serif;font-size:15px;font-weight:400;letter-spacing:.04em;white-space:nowrap;color:var(--clay-dark);
 }
 .cat-card__go svg{width:18px;height:18px;transform:scaleX(-1);transition:transform .3s var(--ease)}
 .cat-tile:hover .cat-card__go svg,.cat-card:hover .cat-card__go svg,.pj-next:hover .cat-card__go svg{transform:scaleX(-1) translateX(-4px)}
@@ -547,7 +547,7 @@ body.at-contact .wa-fab::after{display:none}
   display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
 }
 .pj-title{
-  direction:ltr;font-family:"Cormorant Garamond",Georgia,serif;
+  direction:ltr;font-family:"Dancing Script",cursive;
   font-size:clamp(2rem,5.4vw,4.2rem);font-weight:700;line-height:1.05;letter-spacing:-.01em;
   text-wrap:balance;max-width:20ch;color:var(--ink);
 }
