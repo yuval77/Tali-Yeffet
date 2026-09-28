@@ -114,8 +114,8 @@ button,a{touch-action:manipulation}
 /* no pin/extra scroll room: the hero scrolls away at completely normal speed, the shrink
    is just a transform tied to how far it's scrolled, so scrolling never pauses or holds */
 .hero{position:relative;height:100svh}
-/* phones: 30% shorter, so the next section already peeks in below the video */
-@media (max-width:760px){.hero{height:70svh}}
+/* phones: a little shorter than the screen (70svh, then made 30% taller), so the next section peeks in */
+@media (max-width:760px){.hero{height:91svh}}
 .hero__pin{
   position:relative;height:100%;overflow:hidden;background:var(--bg);
   --hero-p:0; /* 0 = full-bleed video, 1 = fully shrunk into its rounded frame */
@@ -366,9 +366,12 @@ main{position:relative;z-index:1;background:var(--bg)}
   box-shadow:0 30px 60px -40px rgb(44 42 38 / .25);
 }
 .site-foot__inner{
+  /* the space above the lead block and below it (down to the dividing line) are equal:
+     the average of the old top padding (clamp 112-192px) and the old gap (clamp 40-64px) */
+  --foot-space:calc((clamp(112px,16vw,192px) + clamp(40px,5vw,64px)) / 2);
   max-width:1180px;margin-inline:auto;
-  display:flex;flex-direction:column;align-items:center;gap:clamp(40px,5vw,64px);
-  padding:clamp(112px,16vw,192px) clamp(20px,3.2vw,48px) clamp(22px,2.6vw,32px);
+  display:flex;flex-direction:column;align-items:center;gap:var(--foot-space);
+  padding:var(--foot-space) clamp(20px,3.2vw,48px) clamp(22px,2.6vw,32px);
 }
 .site-foot__lead{max-width:100%;text-align:center;display:flex;flex-direction:column;align-items:center}
 .site-foot__title{white-space:nowrap;font-size:min(clamp(3rem,5.85vw,4.95rem), (100vw - 48px) / 10.5);line-height:1.08;margin:0 0 18px}
@@ -587,4 +590,16 @@ body.at-contact .wa-fab::after{display:none}
   margin-inline:clamp(12px,1.8vw,26px);
   border-radius:clamp(24px,3.6vw,52px);
   padding-block:clamp(56px,8vw,112px);
+}
+
+/* phones: the social icons + email come straight after the "תתחילו איתי שיחה" button, with room below
+   them; the copyright line follows under the dividing line. display:contents lets the bar's two
+   parts be ordered separately inside the footer column. */
+@media (max-width:760px){
+  .site-foot__bar{display:contents}
+  .site-foot__contact{order:1;margin-top:calc(28px - var(--foot-space));margin-bottom:24px}
+  .site-foot__bar p{
+    order:2;align-self:stretch;text-align:center;
+    border-top:1px solid var(--line);padding-top:20px;
+  }
 }
