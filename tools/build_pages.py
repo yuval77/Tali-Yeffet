@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Build the category + project pages.
 
-  python tools/build_pages.py --images   # raw photos -> assets/projects/<slug>/NN.webp (+ cover.webp)
+  python tools/build_pages.py --images [--only auto]   # raw photos -> assets/projects/<slug>/NN.webp (+ cover.webp)
   python tools/build_pages.py            # data/projects.json -> offices.html, residential.html, p/<slug>.html
 
 Raw photos are read from --src (default: site/assets, or ../_originals once they were moved there).
 Edit names / order / which shots are used in data/projects.json (optional "drop": [1-based numbers]).
 """
-import argparse, json, os, re, sys
+import argparse
+import hashlib, json, os, re, sys
 from pathlib import Path
 from PIL import Image
 
@@ -38,6 +39,16 @@ def pick_files(folder: Path, mode: str):
             if max(w, h) >= 3000 and not re.search(r"\(1\)", p.name):
                 keep.append(p)
         files = keep
+    elif mode == "all-unique":
+        # every photo once (byte-identical copies skipped); files named first / second / third...
+        # lead in that order, the rest follow by name
+        seen, keep = set(), []
+        for p in files:
+            digest = hashlib.md5(p.read_bytes()).hexdigest()
+            if digest not in seen:
+                seen.add(digest); keep.append(p)
+        lead = ["first", "second", "third", "fourth", "fifth"]
+        files = sorted(keep, key=lambda p: (lead.index(p.stem.lower()) if p.stem.lower() in lead else len(lead), p.name))
     return files
 
 
@@ -51,8 +62,10 @@ def export(im: Image.Image, dest: Path, long_edge=LONG_EDGE):
     im.save(dest, "WEBP", quality=QUALITY, method=6)
 
 
-def build_images(src_root: Path):
+def build_images(src_root: Path, only=None):
     for slug, p in DATA["projects"].items():
+        if only and slug not in only:
+            continue
         folder = src_root / p["src"]
         if not folder.exists():
             print("missing source folder", folder); continue
@@ -193,8 +206,9 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--images", action="store_true")
     ap.add_argument("--src")
+    ap.add_argument("--only", nargs="+", help="project slugs to rebuild images for (default: all)")
     a = ap.parse_args()
     if a.images:
-        build_images(Path(a.src) if a.src else default_src())
+        build_images(Path(a.src) if a.src else default_src(), a.only)
     else:
         build_pages()

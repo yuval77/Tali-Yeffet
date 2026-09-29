@@ -26,11 +26,7 @@
       "name": "Auto Chen Momentum",
       "category": "offices",
       "src": "auto chen",
-      "pick": "big-only",
-      "drop": [
-        5,
-        6
-      ]
+      "pick": "all-unique"
     },
     "banxso": {
       "name": "Banxso Not Your Grandfather's Office",
