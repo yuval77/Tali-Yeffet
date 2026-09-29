@@ -35,6 +35,7 @@
     heroShrink();
     heroRotator();
     deck();
+    beforeAfter();
     pressScroller();
     contactFab();
     copyButtons();
@@ -138,6 +139,27 @@
     }
     balance();
     window.addEventListener('resize', balance, { passive: true });
+  }
+
+  /* ================= BEFORE & AFTER CLIPS (play only while on screen) ================= */
+  function beforeAfter() {
+    var vids = $$('.ba video');
+    if (!vids.length) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      vids.forEach(function (v) { v.setAttribute('controls', ''); });   // no autoplay: let people start them
+      return;
+    }
+    if (!('IntersectionObserver' in window)) {
+      vids.forEach(function (v) { v.play().catch(function () {}); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) en.target.play().catch(function () {});
+        else en.target.pause();
+      });
+    }, { threshold: 0.25 });
+    vids.forEach(function (v) { io.observe(v); });
   }
 
   /* ================= HERO ROTATOR (cycles the "how" line under the tagline) ================= */
