@@ -120,7 +120,7 @@ def head(title, depth, desc, active="projects"):
 <meta name="description" content="{desc}">
 <meta property="og:title" content="{title}">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://yuval77.github.io/Tali-Yeffet/assets/icons/share-logo.jpg">
+<meta property="og:image" content="https://taliyeffet.co.il/assets/icons/share-logo.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <link rel="icon" href="{root}assets/icons/favicon.ico?v=2" sizes="any">

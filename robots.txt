@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://taliyeffet.co.il/sitemap.xml
