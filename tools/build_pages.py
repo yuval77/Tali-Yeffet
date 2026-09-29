@@ -108,8 +108,9 @@ def cover(slug):
     return shots(slug)[0][0]
 
 
-def head(title, depth, desc):
+def head(title, depth, desc, active="projects"):
     root = "../" * depth
+    cur = lambda key: ' class="active"' if key == active else ""
     return f"""<!doctype html>
 <html lang="he" dir="rtl">
 <head>
@@ -128,16 +129,17 @@ def head(title, depth, desc):
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700&family=Dancing+Script:wght@500;600;700&family=Marmelad&display=swap">
-<link rel="stylesheet" href="{root}styles.css?v=20260968">
+<link rel="stylesheet" href="{root}styles.css?v=20260973">
 </head>
 <body class="subpage">
 <header class="header" id="header">
   <div class="header__inner glass">
     <nav class="nav" id="nav" aria-label="ניווט ראשי">
       <a href="{root}index.html">בית</a>
-      <a href="{root}index.html#projects" class="active">פרויקטים</a>
+      <a href="{root}index.html#projects"{cur("projects")}>פרויקטים</a>
       <a href="{root}index.html#about">אודות</a>
       <a href="{root}index.html#contact" class="nav__cta">צור קשר</a>
+      <a href="{root}makeover.html"{cur("makeover")}>מהפך לבית</a>
     </nav>
   </div>
 </header>
@@ -154,7 +156,7 @@ def foot(depth):
 <a class="wa-fab" data-wa href="#" aria-label="שליחת הודעה בוואטסאפ" target="_blank" rel="noopener">
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347M12.05 21.785h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.885-9.885 9.885m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.548 4.142 1.588 5.945L.057 24l6.305-1.654a11.88 11.88 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413"/></svg>
 </a>
-<script src="{root}app.js?v=20260968" defer></script>
+<script src="{root}app.js?v=20260973" defer></script>
 </body>
 </html>
 """
@@ -174,6 +176,37 @@ def category_page(cat):
       <span class="cat-card__label glass"><span class="cat-card__name">{p['name']}</span><span class="cat-card__go">Explore {ARROW}</span></span>
     </a>
 """
+    out += "  </div>\n</section>\n"
+    return out + foot(depth)
+
+
+# before / after clips on makeover.html, in display order (files: assets/before-after/<id>.mp4 + <id>.jpg poster)
+MAKEOVER_VIDEOS = ["69527", "38910", "32510"]
+
+
+def makeover_page():
+    depth = 0
+    out = head("מהפך לבית · טלי יפת", depth, "מהפך לבית — סרטוני לפני ואחרי מפרויקטים של טלי יפת", active="makeover")
+    out += '''<section class="cat ba">
+  <div class="ba__head">
+    <div>
+      <h1 class="cat__title">מהפך לבית</h1>
+      <p class="ba__title" dir="ltr">Before and After</p>
+    </div>
+    <button class="ba__sound" type="button" aria-pressed="false" aria-label="הפעלת סאונד לסרטון שבמרכז המסך">
+      <svg class="ba__ico-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
+      <svg class="ba__ico-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+    </button>
+  </div>
+  <div class="ba__grid">
+'''
+    for vid in MAKEOVER_VIDEOS:
+        out += f'''    <figure class="ba__item reveal">
+      <video muted loop playsinline preload="metadata" poster="assets/before-after/{vid}.jpg" aria-label="לפני ואחרי">
+        <source src="assets/before-after/{vid}.mp4?v={hashlib.md5((SITE / 'assets/before-after' / (vid + '.mp4')).read_bytes()).hexdigest()[:8]}" type="video/mp4">
+      </video>
+    </figure>
+'''
     out += "  </div>\n</section>\n"
     return out + foot(depth)
 
@@ -205,7 +238,8 @@ def build_pages():
         (SITE / f"{cat['slug']}.html").write_text(category_page(cat), encoding="utf-8")
     for slug in DATA["projects"]:
         (SITE / "p" / f"{slug}.html").write_text(project_page(slug), encoding="utf-8")
-    print("pages written:", len(DATA["categories"]) + len(DATA["projects"]))
+    (SITE / "makeover.html").write_text(makeover_page(), encoding="utf-8")
+    print("pages written:", len(DATA["categories"]) + len(DATA["projects"]) + 1)
 
 
 if __name__ == "__main__":

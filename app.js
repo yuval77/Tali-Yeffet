@@ -141,25 +141,67 @@
     window.addEventListener('resize', balance, { passive: true });
   }
 
-  /* ================= BEFORE & AFTER CLIPS (play only while on screen) ================= */
+  /* ================= BEFORE & AFTER CLIPS (play while on screen; one page-wide sound toggle) ================= */
+  // clips always play muted. With the sound button on, only the clip nearest the middle of the screen is
+  // unmuted; the others stay muted, so one soundtrack at a time. Unmuting the clip that is already playing
+  // (never restarting it) keeps its sound on the exact second shown.
   function beforeAfter() {
     var vids = $$('.ba video');
     if (!vids.length) return;
+    var btn = $('.ba__sound');
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      vids.forEach(function (v) { v.setAttribute('controls', ''); });   // no autoplay: let people start them
+      vids.forEach(function (v) { v.setAttribute('controls', ''); });   // no autoplay: people start them (and their sound) themselves
+      if (btn) btn.hidden = true;
       return;
     }
-    if (!('IntersectionObserver' in window)) {
-      vids.forEach(function (v) { v.play().catch(function () {}); });
-      return;
-    }
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) {
-        if (en.isIntersecting) en.target.play().catch(function () {});
-        else en.target.pause();
+    var soundOn = false;
+
+    function centerClip() {
+      var mid = window.innerHeight / 2, best = null, bestDist = Infinity;
+      vids.forEach(function (v) {
+        var r = v.getBoundingClientRect();
+        if (r.bottom <= 0 || r.top >= window.innerHeight) return;   // off screen
+        var d = Math.abs((r.top + r.bottom) / 2 - mid);
+        if (d < bestDist) { bestDist = d; best = v; }
       });
-    }, { threshold: 0.25 });
-    vids.forEach(function (v) { io.observe(v); });
+      return best;
+    }
+    function applySound() {
+      var loud = soundOn ? centerClip() : null;
+      vids.forEach(function (v) {
+        if (v !== loud) { v.muted = true; return; }
+        if (!v.muted) return;
+        v.muted = false;
+        // a browser that refuses sound without a fresh tap pauses the clip: keep it playing, muted
+        if (v.paused) v.play().catch(function () { v.muted = true; v.play().catch(function () {}); });
+      });
+    }
+    if (btn) {
+      btn.addEventListener('click', function () {
+        soundOn = !soundOn;
+        btn.setAttribute('aria-pressed', String(soundOn));
+        btn.setAttribute('aria-label', soundOn ? 'השתקת הסרטונים' : 'הפעלת סאונד לסרטון שבמרכז המסך');
+        applySound();
+      });
+    }
+
+    // a plain scroll check (like contactFab): a clip plays while at least a quarter of it is on screen
+    var ticking = false;
+    function update() {
+      ticking = false;
+      var vh = window.innerHeight;
+      vids.forEach(function (v) {
+        var r = v.getBoundingClientRect();
+        var shown = Math.min(r.bottom, vh) - Math.max(r.top, 0);
+        if (shown > r.height * 0.25) { if (v.paused) v.play().catch(function () {}); }
+        else if (!v.paused) v.pause();
+      });
+      applySound();
+    }
+    function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    update();
   }
 
   /* ================= HERO ROTATOR (cycles the "how" line under the tagline) ================= */
