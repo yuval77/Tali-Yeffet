@@ -91,6 +91,12 @@ def shots(slug):
     return res
 
 
+def ver(slug, name):
+    """short content hash for the image URL: files are numbered (01.webp...), so when a project's photos
+    are rebuilt the same name can hold a different photo; a new ?v= stops browsers showing the cached one"""
+    return hashlib.md5((OUT_IMG / slug / name).read_bytes()).hexdigest()[:8]
+
+
 def cover(slug):
     """cover file name: the configured one, else the first landscape shot"""
     p = DATA["projects"][slug]
@@ -164,7 +170,7 @@ def category_page(cat):
     for slug in cat["projects"]:
         p = DATA["projects"][slug]
         out += f"""    <a class="cat-card reveal" href="p/{slug}.html">
-      <img src="assets/projects/{slug}/{cover(slug)}" alt="{p['name']}" loading="lazy" decoding="async">
+      <img src="assets/projects/{slug}/{cover(slug)}?v={ver(slug, cover(slug))}" alt="{p['name']}" loading="lazy" decoding="async">
       <span class="cat-card__label glass"><span class="cat-card__name">{p['name']}</span><span class="cat-card__go">Explore {ARROW}</span></span>
     </a>
 """
@@ -183,10 +189,10 @@ def project_page(slug):
     for i, (name, w, h) in enumerate(shots(slug)):
         cls = "pj-shot pj-shot--tall" if h > w else "pj-shot"
         load = 'fetchpriority="high"' if i == 0 else 'loading="lazy"'
-        out += f'  <figure class="{cls}"><img src="../assets/projects/{slug}/{name}" width="{w}" height="{h}" style="--r:{w/h:.4f}" alt="{p["name"]}" {load} decoding="async"></figure>\n'
+        out += f'  <figure class="{cls}"><img src="../assets/projects/{slug}/{name}?v={ver(slug, name)}" width="{w}" height="{h}" style="--r:{w/h:.4f}" alt="{p["name"]}" {load} decoding="async"></figure>\n'
     out += "</section>\n"
     out += f"""<a class="pj-next" href="{nxt_slug}.html">
-  <img src="../assets/projects/{nxt_slug}/{cover(nxt_slug)}" alt="" loading="lazy" decoding="async">
+  <img src="../assets/projects/{nxt_slug}/{cover(nxt_slug)}?v={ver(nxt_slug, cover(nxt_slug))}" alt="" loading="lazy" decoding="async">
   <span class="pj-next__label glass"><span class="pj-next__name">{nxt['name']}</span><span class="cat-card__go">Explore {ARROW}</span></span>
 </a>
 """
